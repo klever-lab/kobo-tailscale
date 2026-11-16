@@ -1,10 +1,5 @@
 #!/bin/sh
 
-# Start by renicing ourselves to a neutral value, to avoid any mishap...
-renice 0 -p $$
-
-# Launch in the background, with a clean env, after a setsid call to make very very sure udev won't kill us ;).
-env -i -- setsid /usr/local/tailscale/on-boot.sh &
-
-# Done :)
+# Detach from udev. Executables and state live on the private system partition.
+env -i PATH=/usr/sbin:/usr/bin:/sbin:/bin setsid /usr/local/tailscale/on-boot.sh >/dev/null 2>&1 &
 exit 0

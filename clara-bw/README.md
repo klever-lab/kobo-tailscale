@@ -12,10 +12,9 @@ the installed firmware before choosing a launcher. On a stock reader, NickelMenu
 can launch the installer while keeping the stock reading interface;
 [NickelMenu does not currently support firmware 5.x](https://pgaskin.net/NickelMenu/).
 
-The installer needs a root shell and the Clara BW kernel's TUN support. It uses
-upstream's bundled iptables binaries and libraries, originally from the
-[July 5th 2017 Raspbian build](http://downloads.raspberrypi.org/raspbian/images/raspbian-2017-07-05/)
-to match the reader's glibc. It does not replace the firmware.
+The installer needs a root shell, the Clara BW kernel's TUN support and at least
+90,000 KiB free on the system partition. It installs the official static binaries
+there, along with private state, and leaves system firewall libraries untouched.
 
 ## Install and authenticate
 
@@ -27,18 +26,22 @@ to match the reader's glibc. It does not replace the firmware.
 4. Authenticate with:
 
    ```sh
-   tailscale up --accept-dns=false --accept-routes=false --ssh=false
+   /usr/local/tailscale/on-wlan-up.sh
    ```
 
-The Wi-Fi reconnect script uses the same options. DNS acceptance remains disabled
+The helper disables DNS changes, subnet routes, SSH and unsolicited incoming
+tailnet connections. It uses `--netfilter-mode=off` for this outbound client;
+it does not advertise routes, provide an exit node or expose any services.
+Tailscale handles Wi-Fi reconnects itself. DNS acceptance remains disabled
 to keep Tailscale from overwriting Kobo's DNS settings. Private HTTPS hostnames
 therefore need a resolver or local hostname mapping that resolves them to their
 Tailscale addresses; keep the hostname for HTTPS certificate validation.
 
-Device connectivity log uploads are disabled. The daemon writes its local log to
-`/tailscaled.log` and preserves the existing identity in `/mnt/onboard/tailscale`.
-Keep that directory and any enrollment keys outside Git. Reinstalling replaces
-binaries without deleting the identity; reboot after updating a running daemon.
+Device connectivity log uploads are disabled. Identity and local logs live under
+`/usr/local/tailscale/state` with root-only access, outside USB-visible storage.
+Stop the daemon with `/usr/local/tailscale/on-wlan-down.sh` before an update.
+The installer preserves existing private state and refuses to silently replace
+an older identity found on USB storage.
 
 Firmware upgrades may require reinstalling the boot scripts. Verify connectivity
 after an upgrade and after sleep, Wi-Fi reconnects and USB transfers before
@@ -46,5 +49,18 @@ relying on unattended sync.
 
 ## Uninstall
 
-Back up the identity first if it must be retained. Upstream's
-`uninstall-tailscale.sh` removes `/mnt/onboard/tailscale`, including the identity.
+Run `sh uninstall-tailscale.sh` as root. It stops this daemon, removes its binaries
+and boot rule, and preserves the private identity. Retire the device through
+Tailscale before deliberately erasing retained credentials.
+
+## Security checks
+
+Run ShellCheck on `install-tailscale.sh`, `uninstall-tailscale.sh` and `scripts/*.sh`.
+The isolated Linux tests require bubblewrap and the pinned official ARM archive:
+
+```sh
+KOBO_TAILSCALE_ARCHIVE=/private/path/tailscale_1.104.7_arm.tgz python3 -m unittest discover -s tests -v
+```
+
+Run the tests from the repository root. They fail if prerequisites are missing.
+The [security review](../SECURITY.md) records the findings and remaining limits.

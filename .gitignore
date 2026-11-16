@@ -5,3 +5,4 @@ tailscale/
 tailscaled.state*
 tailscaled.log
 .private/
+__pycache__/

@@ -1,30 +1,20 @@
 #!/bin/sh
 
-echo "Uninstalling tailscale..."
-
-pid=$(pgrep tailscaled)
-if [ -n "$pid" ]; then
-  echo "Terminating tailscale daemon with PID $pid ..."
-  kill -15 "$pid"
-
-  # Wait a little bit for the daemon to terminate cleanly.
-  sleep 3
-
-  echo "Tailscale daemon terminated successfully."
+set -eu
+install_root=/usr/local/tailscale
+[ "$(id -u)" = 0 ] || { echo 'Run this uninstaller as root on the reader.' >&2; exit 1; }
+for path in "$install_root" "$install_root/bin" "$install_root/state"; do
+  [ ! -L "$path" ] || { echo 'Installation directory is a symlink.' >&2; exit 1; }
+done
+if [ -x "$install_root/on-wlan-down.sh" ]; then
+  "$install_root/on-wlan-down.sh"
 fi
-
-echo "Removing iptables binaries from /sbin and /lib ..."
-rm -f /sbin/xtables-multi /sbin/iptables
-rm -f /lib/libxtables.so.10 /lib/libip4tc.so.0 /lib/libip6tc.so.0
-
-echo "Removing tailscale binaries from /mnt/onboard/tailscale and /usr/bin ..."
-rm -rf /mnt/onboard/tailscale
-rm -f /usr/bin/tailscale /usr/bin/tailscaled
-
-echo "Removing tailscale boot and load scripts from /usr/local/tailscale ..."
-rm -rf /usr/local/tailscale
-
-echo "Removing tailscale udev rule from /etc/udev/rules.d ..."
-rm -f /etc/udev/rules.d/99-tailscale.rules
-
-echo "Uninstallation complete!"
+rm -f /etc/udev/rules.d/98-tailscale.rules
+if [ "$(readlink /usr/bin/tailscale 2>/dev/null || true)" = "$install_root/bin/tailscale" ]; then
+  rm -f /usr/bin/tailscale
+fi
+rm -f "$install_root/bin/tailscale" "$install_root/bin/tailscaled"
+for script in boot.sh on-boot.sh on-wlan-up.sh on-wlan-down.sh; do
+  rm -f "$install_root/$script"
+done
+echo 'Uninstalled. The private identity and logs remain in /usr/local/tailscale/state.'
