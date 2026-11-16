@@ -2,8 +2,9 @@
 
 This fork's Clara BW installer pins Tailscale 1.104.7 and verifies the official ARM
 archive's SHA-256 before changing installed files. It can run from any working
-directory. Upstream reported this device working with firmware 4.39.23027 and
-Linux 4.9.77; this fork still needs verification on the physical reader.
+directory. This fork has passed native Tailscale startup and private HTTPS access
+checks on a Clara BW running firmware 4.46.23852 and Linux 4.9.77. The daemon used
+nftables with no bundled iptables binaries; see the [verification limits](../SECURITY.md).
 
 ## Before installing
 
