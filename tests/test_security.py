@@ -10,7 +10,7 @@ import unittest
 
 REPO = Path(__file__).resolve().parents[1]
 ARCHIVE = Path(os.environ.get("KOBO_TAILSCALE_ARCHIVE", "missing-verified-archive"))
-TOOLS = "sh id dirname grep cut pidof readlink awk sha256sum tar gzip mktemp mkdir chmod cp ln rm env setsid mknod timeout sleep cat".split()
+TOOLS = "sh id dirname grep cut pidof readlink awk sha256sum tar gzip mktemp mkdir chmod cp mv ln rm env setsid mknod timeout sleep cat".split()
 
 
 class InstallerSecurityTests(unittest.TestCase):
@@ -73,6 +73,19 @@ class InstallerSecurityTests(unittest.TestCase):
     def test_tampered_archive_is_rejected_before_extraction_or_system_writes(self):
         (self.payload / "tailscale_1.104.7_arm.tgz").write_bytes(b"not the publisher's archive")
         self.rejected_without_installing("FAILED")
+
+    def test_tampered_download_is_rejected_before_system_writes(self):
+        (self.payload / "tailscale_1.104.7_arm.tgz").unlink()
+        self.command("wget", 'printf "tampered download" > "$2"\n')
+        self.rejected_without_installing("FAILED")
+
+    def test_a_verified_fresh_download_can_be_installed(self):
+        (self.payload / "tailscale_1.104.7_arm.tgz").rename(self.root / "onboard/download.tgz")
+        self.command("wget", 'cp /mnt/onboard/download.tgz "$2"\n')
+        result = self.run_script("install-tailscale.sh")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue((self.root / "local/tailscale/bin/tailscaled").is_file())
+        self.assertFalse((self.payload / "tailscale_1.104.7_arm.tgz.partial").exists())
 
     def test_low_system_space_is_rejected(self):
         self.space(89999)

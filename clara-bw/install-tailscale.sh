@@ -4,13 +4,12 @@ set -eu
 umask 077
 
 # Verify both pins when updating from https://pkgs.tailscale.com/stable/#static.
-export TAILSCALE_VERSION=1.104.7
+TAILSCALE_VERSION=1.104.7
 TAILSCALE_SHA256=1c753fef45d497491081db37552b7a2a42c7932292743bf6936cb1a42b6bceb0
 install_root=/usr/local/tailscale
 export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
-task_root=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
-cd "$task_root"
+CDPATH='' cd -- "$(dirname -- "$0")"
 
 [ "$(id -u)" = 0 ] || { echo 'Run this installer as root on the reader.' >&2; exit 1; }
 [ "$(uname -m)" = armv7l ] || { echo 'This installer requires a Kobo Clara BW.' >&2; exit 1; }
@@ -49,8 +48,9 @@ if [ ! -f "$archive" ]; then
   wget -O "$archive.partial" "https://pkgs.tailscale.com/stable/$archive"
   printf '%s  %s\n' "$TAILSCALE_SHA256" "$archive.partial" | sha256sum -c -
   mv "$archive.partial" "$archive"
+else
+  printf '%s  %s\n' "$TAILSCALE_SHA256" "$archive" | sha256sum -c -
 fi
-printf '%s  %s\n' "$TAILSCALE_SHA256" "$archive" | sha256sum -c -
 stage=$(mktemp -d /mnt/onboard/.tailscale-install.XXXXXX)
 trap 'rm -rf "$stage"' EXIT HUP INT TERM
 tar -xzf "$archive" -C "$stage" "tailscale_${TAILSCALE_VERSION}_arm/tailscale" "tailscale_${TAILSCALE_VERSION}_arm/tailscaled"

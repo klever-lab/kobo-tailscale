@@ -1,7 +1,7 @@
 #!/bin/sh
 set -eu
 install_root=/usr/local/tailscale
-timeout 5 "$install_root/bin/tailscale" --socket=/var/run/tailscale/tailscaled.sock down >/dev/null 2>&1 || true
+timeout 5 "$install_root/bin/tailscale" down >/dev/null 2>&1 || true
 [ -f "$install_root/state/daemon.pid" ] || exit 0
 pid=$(cat "$install_root/state/daemon.pid")
 case "$pid" in

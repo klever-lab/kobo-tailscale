@@ -5,7 +5,7 @@ Reviewed on 2026-11-16 UTC before installation on the connected Clara BW
 
 | Finding | Resolution |
 | --- | --- |
-| Inherited installer overwrote system firewall binaries with opaque 2017 builds. | Removed those files from the Clara BW package. The outbound client uses Tailscale's documented netfilter `off` mode and shields-up filtering. |
+| Inherited installer overwrote system firewall binaries with opaque 2017 builds. | Excluded those files from automatic installation. The original bundle is retained pending exact-daemon and physical-reader verification; netfilter `off` alone does not prove that backend initialization succeeds without it. |
 | Node identity and executable binaries lived on USB-visible FAT storage. | Install on the system partition, with root-only directory access. Reject insufficient space and symlinked installation/state paths. |
 | Uninstall deleted the enrolled identity and targeted the wrong boot rule. | Remove only owned program files and the correct rule; retain private state. |
 | Download or platform mismatch could affect a root installation. | Verify the official archive's pinned SHA-256 before extraction; reject other models, firmware families and existing conflicting installations. |
@@ -24,6 +24,13 @@ ShellCheck and isolated installer tests cover failure before system writes,
 private filesystem permissions, identity retention and unrelated-file retention.
 The tests do not establish physical TUN, TLS or sleep/reconnect behavior; those
 require verification on the reader after staging.
+
+The exact official ARM 1.104.7 daemon was also run through QEMU in an isolated
+network namespace with iptables and ip6tables absent. It created its TUN engine,
+reported `NeedsLogin`, selected nftables, and accepted netfilter mode `off` with
+shields-up enabled. This checks backend initialization, not the Kobo's kernel or
+authenticated packet flow. Keep the original firewall bundle until the native
+reader passes those checks; the installer does not execute that bundle.
 
 This review covers the integration and package provenance. It does not certify
 the stock firmware, audit all of Tailscale or NickelMenu, or establish a

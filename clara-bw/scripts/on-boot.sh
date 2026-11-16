@@ -24,5 +24,5 @@ if [ -f "$install_root/state/daemon.pid" ]; then
   fi
 fi
 echo "$$" > "$install_root/state/daemon.pid"
-exec "$install_root/bin/tailscaled" --statedir="$install_root/state" --socket=/var/run/tailscale/tailscaled.sock \
+exec "$install_root/bin/tailscaled" --statedir="$install_root/state" \
   > "$install_root/state/daemon.log" 2>&1
