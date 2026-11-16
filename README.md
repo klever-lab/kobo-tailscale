@@ -1,6 +1,11 @@
 # kobo-tailscale
 Install scripts for getting [Tailscale](https://tailscale.com) running on Kobo e-readers and persisting through reboots.
 
+This is Klever's fork of [videah/kobo-tailscale](https://github.com/videah/kobo-tailscale).
+Our Clara BW setup uses the [Clara BW instructions](clara-bw/README.md), a pinned
+Tailscale release with SHA-256 verification, and DNS acceptance disabled by default.
+The other device directories retain upstream's installers.
+
 ## Supported devices
 - *Kobo Libra 2*
 - *Koba Libra Colour*/*Koba Libra Color*
@@ -10,11 +15,14 @@ If you have another device and would like to contribute, please open a PR!
 
 ## Installation
 > [!NOTE]  
-> The version of Tailscale to install can be chosen by editing the `TAILSCALE_VERSION` variable in `install-tailscale.sh`.
+> The Clara BW installer pins both `TAILSCALE_VERSION` and `TAILSCALE_SHA256`.
+> Update and verify both together. The other installers use upstream's version variable.
 
 1. Download this repo onto your Kobo e-reader's onboard storage and find your device.
 2. Run `install-tailscale.sh` from the chosen device's directory.
-3. Run `tailscale up` and follow the instructions to authenticate your e-reader!
+3. For Clara BW, run `tailscale up --accept-dns=false --accept-routes=false --ssh=false`
+   and follow the instructions to authenticate your e-reader. Follow the upstream
+   instructions for the other models.
 
 ## Uninstallation
 Simply run `uninstall-tailscale.sh` from the chosen device's directory in the repo.

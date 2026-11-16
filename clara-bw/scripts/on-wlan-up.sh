@@ -1,2 +1,2 @@
 #!/bin/sh
-tailscale up
+tailscale up --accept-dns=false --accept-routes=false --ssh=false

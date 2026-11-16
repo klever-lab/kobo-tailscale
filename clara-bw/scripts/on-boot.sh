@@ -1,5 +1,8 @@
 #!/bin/sh
 
+umask 077
+export TS_NO_LOGS_NO_SUPPORT=true
+
 # Make sure to load the TUN kernel module and create the /dev/net/tun device
 if [ ! -c /dev/net/tun ]; then
   mkdir -p /dev/net
@@ -7,16 +10,15 @@ if [ ! -c /dev/net/tun ]; then
 fi
 
 # Make absolutely sure that iptables is in the PATH
-export PATH=/usr/sbin:/usr/bin:$PATH
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
 
 # Make sure /mnt/onboard is mounted
-timeout 5 sh -c "while ! grep -q /mnt/onboard /proc/mounts; do sleep 0.1; done"
-if [[ $? -eq 143 ]]; then
+if ! timeout 5 sh -c 'while ! grep -q " /mnt/onboard " /proc/mounts; do sleep 1; done'; then
     exit 1
 fi
 
 case "$(pidof tailscaled | wc -w)" in
-0) tailscaled --statedir=/mnt/onboard/tailscale &> /tailscaled.log &
+0) tailscaled --statedir=/mnt/onboard/tailscale > /tailscaled.log 2>&1 &
    ;;
 esac
 

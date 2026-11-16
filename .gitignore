@@ -1,0 +1,7 @@
+*.tgz
+*.partial
+auth.key
+tailscale/
+tailscaled.state*
+tailscaled.log
+.private/
